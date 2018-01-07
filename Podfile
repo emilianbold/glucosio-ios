@@ -5,4 +5,5 @@ target 'glucosio' do
   pod 'Realm', '1.0.2'
   pod 'Charts', '3.0.1'
   pod 'SVProgressHUD'
+  pod 'RNN', '~> 1.0'
 end

@@ -1,0 +1,6 @@
+framework module RNN {
+  umbrella header "RNN-umbrella.h"
+
+  export *
+  module * { export * }
+}
