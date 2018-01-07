@@ -25,12 +25,19 @@
 @property (nonatomic, readwrite, strong) NSArray *settingKeys;
 @property (nonatomic, readwrite, strong) NSArray *aboutKeys;
 @property (nonatomic, readwrite, strong) NSArray *dataKeys;
+#if DEBUG
+@property (nonatomic, readwrite, strong) NSArray *debugKeys;
+@property (nonatomic, readwrite, strong) NSDictionary * debugKeysTitle;
+#endif
 @end
 
 @implementation GLUCSettingsViewController
 
 #define ABOUT_SECTION 2
 #define DATA_SECTION 1
+#if DEBUG
+#define RNN_SECTION 3
+#endif
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -40,6 +47,11 @@
     } else {
         self.settingKeys = [self.model.currentUser settingsProperties];
     }
+
+#if DEBUG
+    self.debugKeys = [self.model.neuralNetworkConfig settingsProperties];
+    self.debugKeysTitle = [self.model.neuralNetworkConfig settingsPropertiesTitle];
+#endif
 
     self.aboutKeys = @[GLUCLoc(@"preferences_version"), GLUCLoc(@"preferences_terms"), GLUCLoc(@"preferences_privacy")];
     self.dataKeys = @[GLUCLoc(@"preferences_data_export")];
@@ -120,6 +132,11 @@
         case ABOUT_SECTION:
             retVal = self.aboutKeys.count;
             break;
+#if DEBUG
+        case RNN_SECTION:
+            retVal = self.debugKeys.count;
+            break;
+#endif
     }
     return retVal;
 }
@@ -236,6 +253,20 @@
                     break;
             }
             break;
+#if DEBUG
+        case RNN_SECTION:
+        {
+            NSString *targetKey = self.debugKeys[(NSUInteger) indexPath.row];
+            GLUCValueEditorViewController *editor = (GLUCValueEditorViewController *)[[self storyboard] instantiateViewControllerWithIdentifier:kGLUCValueEditorViewControllerIdentifier];
+            editor.editedObject = self.model.neuralNetworkConfig;
+            editor.editedProperty = targetKey;
+            editor.title = [self.debugKeysTitle valueForKey:targetKey];
+            editor.model = self.model;
+            self.navigationItem.backBarButtonItem = [self cancelButtonItem];
+            [self.navigationController pushViewController:editor animated:YES];
+        }
+            break;
+#endif
         case ABOUT_SECTION:
             switch (indexPath.row) {
                 case 0:
@@ -289,6 +320,11 @@
         case ABOUT_SECTION:
             targetKeys = self.aboutKeys;
             break;
+#if DEBUG
+        case RNN_SECTION:
+            targetKeys = self.debugKeys;
+            break;
+#endif
         case 0:
         default:
             targetKeys = self.settingKeys;
@@ -304,6 +340,11 @@
     cell.textLabel.font = [GLUCAppearanceController defaultFont];
     
     if (indexPath.row >= 0 && indexPath.row < [targetKeys count]) {
+#if DEBUG
+        if(indexPath.section == RNN_SECTION) {
+            cell.textLabel.text = [self.debugKeysTitle objectForKey: targetKey];
+        } else
+#endif
         if (indexPath.section == ABOUT_SECTION || indexPath.section == DATA_SECTION) {
             cell.textLabel.text = GLUCLoc(targetKey);
         } else {
@@ -356,6 +397,11 @@
         case ABOUT_SECTION:
             retVal = GLUCLoc(@"preferences_about");
             break;
+#if DEBUG
+        case RNN_SECTION:
+            retVal = @"Neural Network";
+            break;
+#endif
         case 0:
         default:
             retVal = GLUCLoc(@"action_settings");
@@ -369,7 +415,12 @@
     if (self.welcomeMode) {
         return 1;
     } else {
+#if DEBUG
+        //+1 for the neural network parameters
+        return 4;
+#else
         return 3;
+#endif
     }
 }
 

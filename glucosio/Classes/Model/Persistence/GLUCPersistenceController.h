@@ -5,6 +5,7 @@
 #import "GLUCReading.h"
 #import "GLUCBloodGlucoseReading.h"
 #import <Realm/Realm.h>
+#import "GLUCRnn.h"
 
 // Increment this for each schema change
 static NSInteger const kGLUCModelSchemaVersion = 1;
@@ -19,6 +20,7 @@ static NSInteger const kGLUCModelSchemaVersion = 1;
 - (void) configureModel;
 
 - (GLUCUser *) currentUser; // creates one if needed
+- (GLUCRnn *) neuralNetworkConfig;
 - (BOOL) saveUser:(GLUCUser *)aUser;
 - (BOOL) deleteUser:(GLUCUser *)aUser;
 

@@ -72,6 +72,7 @@
 
 @interface GLUCPersistenceController ()
 @property(strong, nonatomic, readwrite) GLUCUser *user;
+@property(strong, nonatomic, readwrite) GLUCRnn *rnnConfig;
 @end
 
 @implementation GLUCPersistenceController
@@ -187,6 +188,14 @@
         }
     }
     return retVal;
+}
+
+- (GLUCRnn *) neuralNetworkConfig {
+    if (!self.rnnConfig) {
+        self.rnnConfig = [[GLUCRnn alloc] init];
+    }
+
+    return self.rnnConfig;
 }
 
 - (GLUCUser *)currentUser { // creates one if new

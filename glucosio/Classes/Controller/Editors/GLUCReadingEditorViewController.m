@@ -9,6 +9,8 @@
 #import "GLUCValueEditorViewController.h"
 #import "TimelineUtil.h"
 #import "glucosio-Swift.h"
+#import "RNN.h"
+#import "GLUCRnn.h"
 
 @interface GLUCReadingEditorViewController ()
 @property (strong, nonatomic) NSArray *rowKeys;
@@ -198,7 +200,8 @@
     //TODO: push more reading types to the watch
     //EMI: Can't use .class directly since these are all Realm proxies. Note how RLMObject.class.className does have the actual proxied class name.
     if ([self.editedObject.class isSubclassOfClass:[GLUCBloodGlucoseReading class]]) {
-        NSDictionary * context = [[TimelineUtil load24hTimeline: self.model.currentUser] toDictionary];
+        DayTimeline * timeline = [TimelineUtil load24hTimeline: self.model.currentUser];
+        NSDictionary * context = [timeline toDictionary];
         [WCSession.defaultSession updateApplicationContext:context error:nil];
 
         GLUCBloodGlucoseReading * gReading = (GLUCBloodGlucoseReading *) self.editedObject;
@@ -210,7 +213,97 @@
                                                             mealTime: gReading.healthKitMealTime];
     }
 
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self compute: [[GLUCBloodGlucoseReading allObjects] sortedResultsUsingProperty:@"creationDate" ascending:YES]
+         withConfiguration:self.model.neuralNetworkConfig];
+    });
+
+
     [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
+}
+
+typedef float(^Mapper) (float);
+
+- (void) compute: (RLMResults<GLUCBloodGlucoseReading *> *) readings withConfiguration:(GLUCRnn *) config {
+    NSMutableArray<NSNumber *> * vals = [[NSMutableArray alloc] initWithCapacity:readings.count];
+    float min = FLT_MAX, max = FLT_MIN;
+
+    for(int i = 0; i < readings.count; i++){
+        GLUCBloodGlucoseReading * cur = readings[i];
+
+        float v = cur.reading.floatValue;
+
+        if (v < min) {
+            min = v;
+        }
+        if (v > max) {
+            max = v;
+        }
+
+        vals[i] = @(v);
+    }
+
+    //normalize
+    for(int i = 0; i < vals.count; i++){
+        float normalizedReading = (vals[i].floatValue - min) / (max - min);
+        vals[i] = @(normalizedReading);
+    }
+
+    [self compute:vals withConfiguration:config withMapper:^(float v) {
+        return v * (max - min) + min;
+    }];
+}
+
+- (void) compute: (NSArray<NSNumber *> *) vals withConfiguration:(GLUCRnn *) config withMapper: (Mapper) map {
+    int chunkSize = 7;
+    if(vals.count < chunkSize) {
+        return;
+    }
+
+    NSMutableArray<RNNPattern *> * patterns = [[NSMutableArray alloc] init];
+
+    for(int i = chunkSize; i < vals.count; i++){
+        RNNPattern * p = [[RNNPattern alloc] initWithFeatures:[vals subarrayWithRange:NSMakeRange(i - chunkSize, chunkSize)]
+                                                      targets:[NSArray arrayWithObject: vals[i]]];
+        [patterns addObject:p];
+    }
+
+    RNN *rnn = [[RNN alloc] init];
+
+    rnn.maxIteration     = 500;
+    rnn.convergenceError = config.convergenceError.doubleValue;
+    rnn.learningRate     = config.learningRate.doubleValue;
+    rnn.timestepSize     = kRNNFullBPTT;
+
+    rnn.randomMax        = 0.1;
+    rnn.randomMin        = rnn.randomMax * -1;
+
+    [rnn addPatternsFromArray:patterns];
+
+    [rnn createHiddenLayerNetsForCount: patterns[0].features.count];
+    [rnn createOutputLayerNetsForCount: patterns[0].targets.count];
+
+    [rnn randomizeWeights];
+    [rnn uniformActiviation:RNNNetActivationSigmoid];
+
+    RNNOptimization *optimization = [[RNNOptimization alloc] init];
+    optimization.method           = RNNOptimizationStandardSGD;
+    [rnn uniformOptimization:optimization];
+
+    [rnn trainingWithIteration:^(NSInteger iteration, RNN *network) {
+        NSLog(@"Iteration %li cost %lf", network.iteration, network.costFunction.mse);
+    } completion:^(NSInteger totalIteration, RNN *network) {
+        [network predicateWithPatterns:patterns completion:^(NSArray<RNNSequenceOutput *> *sequenceOutputs) {
+            [sequenceOutputs enumerateObjectsUsingBlock:^(RNNSequenceOutput * _Nonnull output, NSUInteger idx, BOOL * _Nonnull stop) {
+                NSLog(@"(2) Predicated the %li outputs %f", idx, map(output.networkOutputs[0].doubleValue));
+            }];
+        }];
+    }];
+
+    //predict next value
+    [rnn predicateWithFeatures:[vals subarrayWithRange:NSMakeRange(vals.count - chunkSize, chunkSize)] completion: ^(NSArray <RNNSequenceOutput *> *sequenceOutputs){
+        NSLog(@"Next predicted value %f", map(sequenceOutputs[0].networkOutputs[0].doubleValue));
+    }];
 }
 
 @end

@@ -69,6 +69,7 @@
 		5F80050A1FE715E700967550 /* UIColor+GLUCAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 551193C71BC3EF60007CD147 /* UIColor+GLUCAdditions.m */; };
 		5F93A6951FF8B63B00E35FCE /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F93A6941FF8B63B00E35FCE /* HealthKit.framework */; };
 		5F93A6971FF8B6A700E35FCE /* HealthKitBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F93A6961FF8B6A700E35FCE /* HealthKitBridge.swift */; };
+		5FE937942000E8F3004A16F4 /* GLUCRnn.m in Sources */ = {isa = PBXBuildFile; fileRef = 5FE937932000E8F3004A16F4 /* GLUCRnn.m */; };
 		73B1C2B53A6DC6F490520D78 /* Pods_glucosio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A360826019661824371D0886 /* Pods_glucosio.framework */; };
 		DF951BAB1C7643BA003E1625 /* GLUCPrivacyViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = DF951BAA1C7643BA003E1625 /* GLUCPrivacyViewController.m */; };
 		DFAED14E1D77037D0042708D /* WKWebViewWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = DFAED14D1D77037D0042708D /* WKWebViewWrapper.m */; };
@@ -496,6 +497,8 @@
 		5F80050B1FE8285700967550 /* glucosio-Bridging-Header.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "glucosio-Bridging-Header.h"; path = "glucosio/Classes/glucosio-Bridging-Header.h"; sourceTree = "<group>"; };
 		5F93A6941FF8B63B00E35FCE /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
 		5F93A6961FF8B6A700E35FCE /* HealthKitBridge.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HealthKitBridge.swift; sourceTree = "<group>"; };
+		5FE937922000E8D5004A16F4 /* GLUCRnn.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLUCRnn.h; sourceTree = "<group>"; };
+		5FE937932000E8F3004A16F4 /* GLUCRnn.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GLUCRnn.m; sourceTree = "<group>"; };
 		96708FFE1DFC4CC4003E47D9 /* glucosio.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = glucosio.entitlements; sourceTree = "<group>"; };
 		A360826019661824371D0886 /* Pods_glucosio.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_glucosio.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B275089609BD502A53C9B849 /* Pods-glucosio.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-glucosio.release.xcconfig"; path = "Pods/Target Support Files/Pods-glucosio/Pods-glucosio.release.xcconfig"; sourceTree = "<group>"; };
@@ -516,6 +519,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		3C494AD1318CCB97BCA97292 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		551193611BC2D2B9007CD147 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -771,6 +781,8 @@
 				42B3CB4FB479419E84455EDC /* GLUCHbA1cReading.h */,
 				42B3C2B3958E31875DEC82DF /* GLUCInsulinIntakeReading.m */,
 				42B3CA2CF7F396DD6B569268 /* GLUCInsulinIntakeReading.h */,
+				5FE937922000E8D5004A16F4 /* GLUCRnn.h */,
+				5FE937932000E8F3004A16F4 /* GLUCRnn.m */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -1037,6 +1049,7 @@
 			buildPhases = (
 				5F59509C1FE5BBAF0098DE07 /* Resources */,
 				5F5950C41FE5BBAF0098DE07 /* Embed App Extensions */,
+				3C494AD1318CCB97BCA97292 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -1486,9 +1499,18 @@
 			files = (
 			);
 			inputPaths = (
+				"${SRCROOT}/Pods/Target Support Files/Pods-glucosio/Pods-glucosio-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/Charts/Charts.framework",
+				"${BUILT_PRODUCTS_DIR}/RNN/RNN.framework",
+				"${BUILT_PRODUCTS_DIR}/Realm/Realm.framework",
+				"${BUILT_PRODUCTS_DIR}/SVProgressHUD/SVProgressHUD.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Charts.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RNN.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Realm.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SVProgressHUD.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1501,9 +1523,12 @@
 			files = (
 			);
 			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
 			);
 			name = "[CP] Check Pods Manifest.lock";
 			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-glucosio-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1537,6 +1562,7 @@
 				551193D01BC3EF60007CD147 /* GLUCModel.m in Sources */,
 				DFDFD7971D7A3E30001F2503 /* GLUCGraphPoint.m in Sources */,
 				DFF65A9D1C24AC07003EC9A4 /* GLUCIndexedListEditorViewController.m in Sources */,
+				5FE937942000E8F3004A16F4 /* GLUCRnn.m in Sources */,
 				DF951BAB1C7643BA003E1625 /* GLUCPrivacyViewController.m in Sources */,
 				551193C81BC3EF60007CD147 /* GLUCAboutViewController.m in Sources */,
 				551193CB1BC3EF60007CD147 /* GLUCHistoryViewController.m in Sources */,
